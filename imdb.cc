@@ -5,6 +5,8 @@ using namespace std;
 #include <fcntl.h>
 #include <unistd.h>
 #include "imdb.h"
+#include <stdio.h>
+#include <stdlib.h>
 
 const char *const imdb::kActorFileName = "actordata";
 const char *const imdb::kMovieFileName = "moviedata";
@@ -24,9 +26,19 @@ bool imdb::good() const
 			(movieInfo.fd == -1) ); 
 }
 
+int cmpActors(const void * a, const void * b) {
+	// კომპარატორი დავწეროთ
+}
+
 // you should be implementing these two methods right here... 
 bool imdb::getCredits(const string& player, vector<film>& films) const 
-{ 
+{
+	size_t num = *(int*)actorFile;
+	//cout << actorNumber << endl;
+	
+	const char* p = player.c_str();
+	//printf("%s\n", p);
+	int* playerLocation = (int*)bsearch(&p, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors);
 	return false;
 }
 bool imdb::getCast(const film& movie, vector<string>& players) const

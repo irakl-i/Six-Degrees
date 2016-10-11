@@ -36,7 +36,7 @@ int cmpActors(const void * a, const void * b)
 	key local = *(key*)a;
 	string s1((char*)local.file + *(int*)b);
 	string s2(local.str);
-	cout << s1 << " =? " << s2 << endl;	
+	// cout << s1 << " =? " << s2 << endl;	
 	if(s2 > s1) return 1;
 	if(s2 < s1) return -1;
 	return 0;
@@ -45,22 +45,34 @@ int cmpActors(const void * a, const void * b)
 bool imdb::getCredits(const string& player, vector<film>& films) const 
 {
 	size_t num = *(int*)actorFile;
-	//cout << actorNumber << endl;
-	
-	// for (size_t i = 1; i <= num; i++)
-	// {
-	// 	int temp = *(int*)((char*)actorFile + i*sizeof(int));	
-	// 	string s((char*)actorFile + temp);
-	// 	cout << s << endl;
-	// 	if (s == "999") break;		
-	// }
-	//int* i = (int*)(char*)actorFile + sizeof(int);
+
+	{
+		// cout << actorNumber << endl;
+		// for (size_t i = 1; i <= num; i++)
+		// {
+		// 	int temp = *(int*)((char*)actorFile + i*sizeof(int));	
+		// 	string s((char*)actorFile + temp);
+		// 	cout << s << endl;
+		// 	if (s == "999") break;		
+		// }
+		// int* i = (int*)(char*)actorFile + sizeof(int);
+	}
 	
 	key k;
 	k.str = player.c_str();
 	k.file = actorFile;
-	//printf("%s\n", p);
-	int* playerLocation = (int*)bsearch(&k, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors);
+	int* location = (int*)bsearch(&k, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors);
+	if(location == NULL) return false;
+
+	void* playerLocation = (char*)actorFile + *(int*)location;
+	// cout << "აააააააააააა: " << (char*)playerLocation << endl;
+	string name((char*)playerLocation);
+	cout << name << endl;
+	if(name.size() % 2 == 0) 
+	{
+		short s = *(short*)((char*)playerLocation + name.size() + 2);
+		cout << "has starred in " << s << " films." << endl;
+	}
 	return false;
 }
 

@@ -61,18 +61,35 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 	key k;
 	k.str = player.c_str();
 	k.file = actorFile;
-	int* location = (int*)bsearch(&k, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors);
+	int* location = (int*)bsearch(&k, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors); // raw ადგილი, offset ინახება (int)
 	if(location == NULL) return false;
 
-	void* playerLocation = (char*)actorFile + *(int*)location;
+	void* playerLocation = (char*)actorFile + *(int*)location; // რეალური ადგილი, აქედან იწყება მსახიობის memory chunk
 	// cout << "აააააააააააა: " << (char*)playerLocation << endl;
 	string name((char*)playerLocation);
-	cout << name << endl;
+	// cout << name << endl;
+	short s; // რამდენ ფილმშია
+	int arrayOffset;
 	if(name.size() % 2 == 0) 
 	{
-		short s = *(short*)((char*)playerLocation + name.size() + 2);
+		arrayOffset = name.size() + 2 + sizeof(short);
+		if (arrayOffset % 4 != 0) {
+			int tmp = arrayOffset / 4;
+			arrayOffset = 4 * (tmp + 1);
+		}
+		s = *(short*)((char*)playerLocation + name.size() + 2);
+		cout << "has starred in " << s << " films." << endl;
+	} else
+	{
+		arrayOffset = name.size() + 1 + sizeof(short);
+		if (arrayOffset % 4 != 0) {
+			int tmp = arrayOffset / 4;
+			arrayOffset = 4 * (tmp + 1);
+		}
+		s = *(short*)((char*)playerLocation + name.size() + 1);
 		cout << "has starred in " << s << " films." << endl;
 	}
+	int* arrayStart = (int*)((char*)playerLocation + arrayOffset);
 	return false;
 }
 

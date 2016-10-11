@@ -45,19 +45,6 @@ int cmpActors(const void * a, const void * b)
 bool imdb::getCredits(const string& player, vector<film>& films) const 
 {
 	size_t num = *(int*)actorFile;
-
-	{
-		// cout << actorNumber << endl;
-		// for (size_t i = 1; i <= num; i++)
-		// {
-		// 	int temp = *(int*)((char*)actorFile + i*sizeof(int));	
-		// 	string s((char*)actorFile + temp);
-		// 	cout << s << endl;
-		// 	if (s == "999") break;		
-		// }
-		// int* i = (int*)(char*)actorFile + sizeof(int);
-	}
-	
 	key k;
 	k.str = player.c_str();
 	k.file = actorFile;
@@ -65,35 +52,37 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 	if(location == NULL) return false;
 
 	void* playerLocation = (char*)actorFile + *(int*)location; // რეალური ადგილი, აქედან იწყება მსახიობის memory chunk
-	// cout << "აააააააააააა: " << (char*)playerLocation << endl;
 	string name((char*)playerLocation);
-	// cout << name << endl;
 	short s; // რამდენ ფილმშია
-	int arrayOffset;
 
-	if(name.size() % 2 == 0) 
-	{
-		arrayOffset = name.size() + 2 + sizeof(short);
-		if (arrayOffset % 4 != 0) {
-			int tmp = arrayOffset / 4;
-			arrayOffset = 4 * (tmp + 1);
-		}
-		s = *(short*)((char*)playerLocation + name.size() + 2);
-		cout << "has starred in " << s << " films." << endl;
-	} else
-	{
-		arrayOffset = name.size() + 1 + sizeof(short);
-		if (arrayOffset % 4 != 0) {
-			int tmp = arrayOffset / 4;
-			arrayOffset = 4 * (tmp + 1);
-		}
-		s = *(short*)((char*)playerLocation + name.size() + 1);
-		cout << "has starred in " << s << " films." << endl;
+	int offset = 1;
+	if(name.size() % 2 == 0) offset *= 2;
+
+	int arrayOffset = name.size() + offset + sizeof(short);
+	if (arrayOffset % 4 != 0) {
+		int tmp = arrayOffset / 4;
+		arrayOffset = 4 * (tmp + 1);
 	}
+	s = *(short*)((char*)playerLocation + name.size() + offset);
+	cout << "has starred in " << s << " films." << endl;
 
 	int* arrayStart = (int*)((char*)playerLocation + arrayOffset);
 	string movie((char*)movieFile + *arrayStart);
 	cout << movie << " " << 1900 + *(char*)((char*)movieFile + *arrayStart + movie.size() + 1) << endl;
+	for (int i = 0; i < 1; i++)
+	{	
+		int n = 0;
+		if(movie.size() % 2 == 1) n = 1;
+		void* ptr = (char*)movieFile + *arrayStart + movie.size() + 2 + n;
+		short nCast = *(short*)ptr;
+		int arrayOffset = movie.size() + 2 + n + sizeof(short);
+		if (arrayOffset % 4 != 0) {
+			int tmp = arrayOffset / 4;
+			arrayOffset = 4 * (tmp + 1);
+		}
+		string s((char*)movieFile + *arrayStart + arrayOffset + nCast * sizeof(int));
+		cout << s << endl;
+	}
 	return false;
 }
 

@@ -36,7 +36,7 @@ int cmpActors(const void * a, const void * b)
 	key local = *(key*)a;
 	string s1((char*)local.file + *(int*)b);
 	string s2(local.str);
-	// cout << s1 << " =? " << s2 << endl;	
+	//qcout << s1 << " =? " << s2 << endl;	
 	if(s2 > s1) return 1;
 	if(s2 < s1) return -1;
 	return 0;
@@ -66,23 +66,20 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 	s = *(short*)((char*)playerLocation + name.size() + offset);
 	cout << "has starred in " << s << " films." << endl;
 
-	int* arrayStart = (int*)((char*)playerLocation + arrayOffset);
-	string movie((char*)movieFile + *arrayStart);
-	cout << movie << " " << 1900 + *(char*)((char*)movieFile + *arrayStart + movie.size() + 1) << endl;
-	for (int i = 0; i < 1; i++)
-	{	
-		int n = 0;
-		if(movie.size() % 2 == 1) n = 1;
-		void* ptr = (char*)movieFile + *arrayStart + movie.size() + 2 + n;
-		short nCast = *(short*)ptr;
-		int arrayOffset = movie.size() + 2 + n + sizeof(short);
-		if (arrayOffset % 4 != 0) {
-			int tmp = arrayOffset / 4;
-			arrayOffset = 4 * (tmp + 1);
-		}
-		string s((char*)movieFile + *arrayStart + arrayOffset + nCast * sizeof(int));
-		cout << s << endl;
+	for(int i = 0; i < s; i++) 
+	{
+		int start = *(int*)((char*)playerLocation + arrayOffset + i * sizeof(int));
+		string movie = ((char*)movieFile + start);
+		film f;
+		f.title = movie;
+		f.year = 1900 + *(char*)((char*)movieFile + start + movie.size() + 1);
+		films.push_back(f);
 	}
+	for (int i = 0; i < films.size(); i++)
+	{
+		cout << films[i].title << " " << films[i].year << endl;
+	}
+	if(films.size() > 0) return true;
 	return false;
 }
 

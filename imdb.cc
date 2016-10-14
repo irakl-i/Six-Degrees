@@ -11,8 +11,13 @@ using namespace std;
 const char *const imdb::kActorFileName = "actordata";
 const char *const imdb::kMovieFileName = "moviedata";
 
-struct key {
+struct actorKey {
 	const char* str;
+	const void* file;
+};
+
+struct filmKey {
+	const film* movie;
 	const void* file;
 };
 
@@ -33,19 +38,31 @@ bool imdb::good() const
 
 int cmpActors(const void * a, const void * b)
 {
-	key local = *(key*)a;
+	actorKey local = *(actorKey*)a;
 	string s1((char*)local.file + *(int*)b);
 	string s2(local.str);
-	//qcout << s1 << " =? " << s2 << endl;	
+	//cout << s1 << " =? " << s2 << endl;	
 	if(s2 > s1) return 1;
 	if(s2 < s1) return -1;
 	return 0;
 }
 
+int cmpFilms(const void * a, const void * b) {
+	filmKey local = *(filmKey*)a;
+	string s1((char*)local.file + *(int*)b);
+	film f2;
+	film f1 = *local.movie;
+	f2.title = s1;
+	f2.year = 1900 + *(char*)((char*)local.file + *(int*)b + s1.size() + 1);
+	if (f1 == f2) return 0;
+	if (f1 < f2) return -1;
+	return 1;
+}
+
 bool imdb::getCredits(const string& player, vector<film>& films) const 
 {
 	size_t num = *(int*)actorFile;
-	key k;
+	actorKey k;
 	k.str = player.c_str();
 	k.file = actorFile;
 	int* location = (int*)bsearch(&k, (char*)actorFile + sizeof(int), num, sizeof(int), cmpActors); // raw ადგილი, offset ინახება (int)
@@ -53,7 +70,6 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 
 	void* playerLocation = (char*)actorFile + *(int*)location; // რეალური ადგილი, აქედან იწყება მსახიობის memory chunk
 	string name((char*)playerLocation);
-	short s; // რამდენ ფილმშია
 
 	int offset = 1;
 	if(name.size() % 2 == 0) offset *= 2;
@@ -63,7 +79,7 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 		int tmp = arrayOffset / 4;
 		arrayOffset = 4 * (tmp + 1);
 	}
-	s = *(short*)((char*)playerLocation + name.size() + offset);
+	short s = *(short*)((char*)playerLocation + name.size() + offset); // რამდენ ფილმშია
 	cout << "has starred in " << s << " films." << endl;
 
 	for(int i = 0; i < s; i++) 
@@ -75,17 +91,38 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 		f.year = 1900 + *(char*)((char*)movieFile + start + movie.size() + 1);
 		films.push_back(f);
 	}
-	for (int i = 0; i < films.size(); i++)
-	{
-		cout << films[i].title << " " << films[i].year << endl;
-	}
-	if(films.size() > 0) return true;
-	return false;
+	return true;
 }
 
 bool imdb::getCast(const film& movie, vector<string>& players) const
-{ 
-	return false; 
+{
+	size_t num = *(int*)movieFile;
+	filmKey k;
+	k.movie = &movie;
+	k.file = movieFile;
+	int* location = (int*)bsearch(&k, (char*)movieFile + sizeof(int), num, sizeof(int), cmpFilms);
+	if(location == NULL) return false;
+
+	void* filmLocation = (char*)movieFile + *(int*)location; // აქედან იწყება ფილმის memory chunk
+	string name((char*)filmLocation);
+
+	int offset = 1;
+	if(name.size() % 2 == 0) offset = 0;
+	short s = *(short*)((char*)filmLocation + name.size() + 2 + offset);
+
+	int arrayOffset = name.size() + 2 + offset + sizeof(short);
+	if (arrayOffset % 4 != 0) {
+		int tmp = arrayOffset / 4;
+		arrayOffset = 4 * (tmp + 1);
+	}
+
+	for (int i = 0; i < s; i++)
+	{
+		int start = *(int*)((char*)filmLocation + arrayOffset + i * sizeof(int));
+		string player = ((char*)actorFile + start);
+		players.push_back(player);
+	}
+	return true;
 }
 
 imdb::~imdb()

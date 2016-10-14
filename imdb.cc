@@ -80,7 +80,6 @@ bool imdb::getCredits(const string& player, vector<film>& films) const
 		arrayOffset = 4 * (tmp + 1);
 	}
 	short s = *(short*)((char*)playerLocation + name.size() + offset); // რამდენ ფილმშია
-	cout << "has starred in " << s << " films." << endl;
 
 	for(int i = 0; i < s; i++) 
 	{

@@ -43,30 +43,38 @@ void generateShortestPath(const string& source, const string& target, const imdb
 	set<string> previouslySeenActors;
 	set<film> previouslySeenFilms;
 
-	path start(source);
-	partialPath.push_back(start);
-	while(partialPath.size() > 0 && partialPath.front().getLength() <= 5) {
+	path partial(source);
+	partialPath.push_back(partial);
+
+	while(partialPath.size() > 0 && partialPath.front().getLength() <= 5) 
+	{
 		path temp = partialPath.front();
 		partialPath.pop_front();
 		string player = temp.getLastPlayer();
 		vector<film> films;
 		db.getCredits(player, films);
-		for(vector<film>::iterator it = films.begin(); it != films.end(); ++it) {
-			if(previouslySeenFilms.find(*it) != previouslySeenFilms.end()) break;
-			previouslySeenFilms.insert(*it);
-			vector<string> players;
-			db.getCast(*it, players);
-			for(vector<string>::iterator it2 = players.begin(); it2 != players.end(); ++it2) {
-				if(previouslySeenActors.find(*it2) != previouslySeenActors.end()) break;
-				previouslySeenActors.insert(*it2);
-				list<path> clone = partialPath;
-				path p(*it2);
-				p.addConnection(*it, *it2);
-				if(*it2 == target) {
-					cout << *it2 << endl;
-					return;
+
+		for (size_t i = 0; i < films.size(); i++) {
+			film movie = films[i];
+			if (previouslySeenFilms.find(movie) == previouslySeenFilms.end()) {
+				previouslySeenFilms.insert(movie);
+				vector<string> players;
+				db.getCast(movie, players);
+				for (size_t j = 0; j < players.size(); j++) {
+					string player = players[j];
+					if (previouslySeenActors.find(player) == previouslySeenActors.end()) {
+						previouslySeenActors.insert(player);
+						path clone = temp;
+						clone.addConnection(movie, player);
+						if (player == target) {
+							cout << clone;
+							return;
+						}
+						else {
+							partialPath.push_back(clone);
+						}
+					}
 				}
-				partialPath.push_back(p);	
 			}
 		}
 	}	
